@@ -2,6 +2,8 @@
 
 module cv2
 
+const VERBOSE = true
+
 using BinDeps
 
 # Load dependency
@@ -12,8 +14,10 @@ else
     error("OpenCV not properly installed. Please run Pkg.build(\"OpenCV\")")
 end
 
+VERBOSE && info("Loading Cxx.jl...")
 using Cxx
 
+VERBOSE && info("dlopen...")
 for lib in [
         libopencv_core,
         libopencv_highgui,
@@ -25,11 +29,25 @@ for lib in [
     p == C_NULL && warn("Failed to load: $lib")
 end
 
-cv_include_top = joinpath(Pkg.dir("OpenCV", "deps", "usr", "include"))
-addHeaderDir(cv_include_top, kind=C_System)
-addHeaderDir(joinpath(cv_include_top, "opencv2"), kind=C_System)
-addHeaderDir(joinpath(cv_include_top, "opencv2", "core"), kind=C_System)
-cxxinclude(joinpath(cv_include_top, "opencv2/opencv.hpp"))
+function include_headers(top)
+    addHeaderDir(top, kind=C_System)
+    addHeaderDir(joinpath(top, "opencv2"), kind=C_System)
+    addHeaderDir(joinpath(top, "opencv2", "core"), kind=C_System)
+    cxxinclude(joinpath(top, "opencv2/opencv.hpp"))
+end
+
+const system_include_top = "/usr/local/include"
+const local_include_top = joinpath(Pkg.dir("OpenCV", "deps", "usr", "include"))
+
+if isdir(local_include_top)
+    VERBOSE && info("Including headers from local path: $local_include_top")
+    include_headers(local_include_top)
+elseif isdir(joinpath(system_include_top, "OpenCV"))
+    VERBOSE && info("Including headers from system path: $system_include_top")
+    include_headers(system_include_top)
+else
+    error("Cannot find OpenCV headers")
+end
 
 for fname in [
     "constants",
