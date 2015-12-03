@@ -2,7 +2,7 @@ using OpenCV
 
 cap = cv2.VideoCapture(0)
 
-isescape(key) = key == 27
+isesc(key) = key == 27
 
 while (true)
     ok, img = cv2.read(cap)
@@ -17,7 +17,7 @@ while (true)
     cv2.imshow("binary threshold", bin)
 
     key = cv2.waitKey(delay=1)
-    isescape(key) && break
+    isesc(key) && break
 end
 
 cv2.release(cap)
