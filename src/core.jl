@@ -7,14 +7,9 @@ typealias Scalar_{T} cxxt"cv::Scalar_<$T>"
 const Scalar = cxxt"cv::Scalar"
 Scalar(v) = @cxx cv::Scalar(v)
 
-
 """cv::Mat
 """
 const Mat = cxxt"cv::Mat"
-
-"""cv::Mat_<T>
-"""
-typealias Mat_{T} cxxt"cv::Mat_<$T>"
 
 Mat() = @cxx cv::Mat()
 function Mat(rows, cols, typ)
@@ -24,22 +19,59 @@ Mat(m::Mat) = @cxx cv::Mat(m)
 function Mat(rows, cols, typ, s::Scalar)
     @cxx cv::Mat(rows, cols, typ, s)
 end
+function Mat(rows, cols, typ, data::Ptr, step=0)
+    @cxx cv::Mat(rows, cols, typ, data, step)
+end
 
-clone(m::Mat) = @cxx m->clone()
-total(m::Mat) = @cxx m->total()
-isContinuous(m::Mat) = @cxx m->isContinuous()
-elemSize(m::Mat) = @cxx m->elemSize()
-depth(m::Mat) = @cxx m->depth()
-channels(m::Mat) = @cxx m->channels()
+"""cv::Mat_<T>
+"""
+typealias Mat_{T} cxxt"cv::Mat_<$T>"
+
+function Base.call{T}(::Type{Mat_{T}})
+    @cxx cv::Mat_()
+end
+function Base.call{T}(::Type{Mat_{T}}, rows, cols)
+    icxx"cv::Mat_<$T>($rows, $cols);"
+end
+function Base.call{T}(::Type{Mat_{T}}, rows, cols, data::Ptr{T}, step=0)
+    icxx"cv::Mat_<$T>($rows, $cols, $data, $step);"
+end
+
+function Base.getindex{T}(m::Mat_{T}, i::Int, j::Int)
+    icxx"$m.at<$T>($i, $j);"
+end
+
+# TODO: hope Cxx can handle C++ inheritance
+typealias AbstractMat Union{Mat, Mat_}
+
+flags(m::AbstractMat) = icxx"$m.flags;"
+dims(m::AbstractMat) = icxx"$m.dims;"
+rows(m::AbstractMat) = icxx"$m.rows;"
+cols(m::AbstractMat) = icxx"$m.cols;"
+data(m::AbstractMat) = icxx"$m.data;"
+
+col(m::AbstractMat, i) = icxx"$m.col($i);"
+row(m::AbstractMat, i) = icxx"$m.row($i);"
+
+function at(m::AbstractMat, T, i, j)
+    icxx"$m.at<$T>($i, $j);"
+end
+
+clone(m::AbstractMat) = @cxx m->clone()
+total(m::AbstractMat) = @cxx m->total()
+isContinuous(m::AbstractMat) = @cxx m->isContinuous()
+elemSize(m::AbstractMat) = @cxx m->elemSize()
+depth(m::AbstractMat) = @cxx m->depth()
+channels(m::AbstractMat) = @cxx m->channels()
 
 # TODO: remove this cxx expression
 cxx"""cv::Size size(cv::Mat img) { return img.size(); }"""
-function Base.size(m::Mat)
+function Base.size(m::AbstractMat)
     @cxx size(m)
 end
 empty(m::Mat) = @cxx m->empty()
 
-function copyTo(src::Mat, dst::Mat)
+function copyTo(src::AbstractMat, dst::AbstractMat)
     @cxx src->copyTo(dst)
     return dst
 end

@@ -1,4 +1,4 @@
-function imshow(winname::AbstractString, mat::Mat)
+function imshow(winname::AbstractString, mat::AbstractMat)
     @cxx cv::imshow(pointer(winname), mat)
 end
 
