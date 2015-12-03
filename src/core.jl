@@ -1,3 +1,5 @@
+import Base: getindex, .*, ./, *, /
+
 """cv::Scalar_<T>
 """
 typealias Scalar_{T} cxxt"cv::Scalar_<$T>"
@@ -27,19 +29,37 @@ end
 """
 typealias Mat_{T} cxxt"cv::Mat_<$T>"
 
-function Base.call{T}(::Type{Mat_{T}})
-    @cxx cv::Mat_()
-end
 function Base.call{T}(::Type{Mat_{T}}, rows, cols)
     icxx"cv::Mat_<$T>($rows, $cols);"
 end
-function Base.call{T}(::Type{Mat_{T}}, rows, cols, data::Ptr{T}, step=0)
+function Base.call{T}(::Type{Mat_{T}}, rows, cols, data::Ptr, step=0)
+    data = convert(Ptr{T}, data)
     icxx"cv::Mat_<$T>($rows, $cols, $data, $step);"
 end
 
-function Base.getindex{T}(m::Mat_{T}, i::Int, j::Int)
+function getindex{T}(m::Mat_{T}, i::Int, j::Int)
     icxx"$m.at<$T>($i, $j);"
 end
+
+# TODO: simpler implentation
+function .*{T}(x::Mat_{T}, y::Real)
+    mat = Mat_{T}(rows(x), cols(x))
+    copyTo(x, mat)
+    icxx"""
+        for (int i = 0; i < $x.rows; ++i) {
+            for (int j = 0; j < $x.cols; ++j) {
+                $mat.at<$T>(i, j) = $x.at<$T>(i, j) * $y;
+            }
+        }
+    """
+    mat
+end
+
+.*(x::Real, y::Mat_) = y .* x
+./(x::Mat_, y::Real) = x .* (1.0/y)
+*(x::Mat_, y::Real) = x .* y
+*(x::Real, y::Mat_) = y * x
+/(x::Mat_, y::Real) = x ./ (1.0/y)
 
 # TODO: hope Cxx can handle C++ inheritance
 typealias AbstractMat Union{Mat, Mat_}
