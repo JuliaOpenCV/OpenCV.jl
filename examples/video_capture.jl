@@ -6,7 +6,8 @@ isesc(key) = key == 27
 
 while (true)
     ok, img = cv2.read(cap)
-    h, w = cv2.size(img)
+    c, h, w = cv2.size(img)
+    @assert c == 3
 
     img = cv2.resize(img, (w/4, h/4))
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)

@@ -1048,3 +1048,6 @@ const ACCESS_WRITE  = 1<<25
 const ACCESS_RW     = 3<<24
 const ACCESS_MASK   = ACCESS_RW
 const ACCESS_FAST   = 1<<26
+
+const CV_DEPTH_MAX      = 1 << CV_CN_SHIFT
+const CV_MAT_DEPTH_MASK = CV_DEPTH_MAX - 1

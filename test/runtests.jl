@@ -17,6 +17,14 @@ using Base.Test
 
     mat = cv2.Mat(10, 20, cv2.CV_8UC3)
     @test cv2.channels(mat) == 3
+
+    @testset "Array to cv::Mat conversion" begin
+        arr = rand(Float64, 10, 2)
+        m = cv2.Mat(arr)
+        @test isa(m, cv2.Mat)
+        @test eltype(m) == eltype(arr)
+        @test size(arr) == reverse(size(m))
+    end
 end
 
 @testset "cv::Mat_<T>" begin

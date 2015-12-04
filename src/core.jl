@@ -1,4 +1,4 @@
-import Base: eltype, similar, size, getindex, .*, ./, *, /
+import Base: convert, eltype, similar, size, getindex, .*, ./, *, /
 import Cxx: CppEnum
 
 """cv::Scalar_<T>
@@ -50,9 +50,56 @@ Size(x, y) = @cxx cv::Size(x, y)
 
 typealias AbstractSize Union{Size, Size_}
 
-height(s::AbstractSize) = @cxx s->height
-width(s::AbstractSize) = @cxx s->width
-area(s::AbstractSize) = @cxx s->area()
+height(s::AbstractSize) = Int(@cxx s->height)
+width(s::AbstractSize) = Int(@cxx s->width)
+area(s::AbstractSize) = Int(@cxx s->area())
+
+"""Determine julia type from the depth of cv::Mat
+"""
+function jltype(depth::Int)
+    if depth == CV_8U
+        return UInt8
+    elseif depth == CV_8S
+        return Int8
+    elseif depth == CV_16U
+        return UInt16
+    elseif depth == CV_16S
+        return Int16
+    elseif depth == CV_32S
+        return Int32
+    elseif depth == CV_32F
+        return Float32
+    elseif depth == CV_64F
+        return Float64
+    else
+        @assert false && "This shouldn't happen"
+    end
+end
+
+"""Determine cv::Mat depth from Julia type
+"""
+function cvdepth(T)
+    if T == UInt8
+        return CV_8U
+    elseif T == Int8
+        return CV_8S
+    elseif T == UInt16
+        return CV_16U
+    elseif T == Int16
+        return CV_16S
+    elseif T == Int32
+        return CV_32S
+    elseif T == Float32
+        return CV_32F
+    elseif T == Float64
+        return CV_64F
+    else
+        error("$T: not supported in cv::Mat")
+    end
+end
+
+mat_depth(flags) = flags & CV_MAT_DEPTH_MASK
+maketype(depth, cn) = mat_depth(depth) + ((cn-1) << CV_CN_SHIFT)
 
 """cv::Mat
 """
@@ -69,6 +116,12 @@ function Mat(rows, cols, typ, data::Ptr, step=0)
     @cxx cv::Mat(rows, cols, typ, data, step)
 end
 Mat(m::Mat) = @cxx cv::Mat(m)
+function Mat{T,N}(arr::Array{T,N})
+    @assert N in 2:3
+    depth = cvdepth(T)
+    cn = N - 1
+    Mat(size(arr, 2), size(arr, 1), maketype(depth, cn), pointer(arr))
+end
 
 # TODO: should avoid copy
 similar(m::Mat) = Mat(m)
@@ -139,17 +192,27 @@ similar_empty(m::UMat) = UMat()
 
 Mat(m::UMat, flags=ACCESS_READ) = @cxx m->getMat(flags)
 
-elemSize1(m::UMat) = @cxx m->elemSize1()
+elemSize1(m::UMat) = Int(@cxx m->elemSize1())
 
 # TODO: hope Cxx can handle C++ inheritance
 typealias AbstractMat Union{Mat, Mat_, UMat}
 
 flags(m::AbstractMat) = icxx"$m.flags;"
 dims(m::AbstractMat) = icxx"$m.dims;"
-rows(m::AbstractMat) = icxx"$m.rows;"
-cols(m::AbstractMat) = icxx"$m.cols;"
+rows(m::AbstractMat) = Int(icxx"$m.rows;")
+cols(m::AbstractMat) = Int(icxx"$m.cols;")
 
-Base.size(m::AbstractMat) = (rows(m), cols(m))
+function Base.size(m::AbstractMat)
+    chan = channels(m)
+    if chan == 1
+        (Int(rows(m)), Int(cols(m)))
+    else
+        (chan, Int(rows(m)), Int(cols(m)))
+    end
+end
+
+jltype(m::AbstractMat) = jltype(Int(depth(m)))
+eltype(m::AbstractMat) = jltype(m)
 
 # Note that cv::UMat doesn't have `data` in members.
 data(m::Union{Mat, Mat_}) = icxx"$m.data;"
@@ -162,11 +225,11 @@ function at(m::Union{Mat, Mat_}, T, i, j)
 end
 
 clone(m::AbstractMat) = @cxx m->clone()
-total(m::AbstractMat) = @cxx m->total()
+total(m::AbstractMat) = Int(@cxx m->total())
 isContinuous(m::AbstractMat) = @cxx m->isContinuous()
-elemSize(m::AbstractMat) = @cxx m->elemSize()
-depth(m::AbstractMat) = @cxx m->depth()
-channels(m::AbstractMat) = @cxx m->channels()
+elemSize(m::AbstractMat) = Int(@cxx m->elemSize())
+depth(m::AbstractMat) = Int(@cxx m->depth())
+channels(m::AbstractMat) = Int(@cxx m->channels())
 
 empty(m::AbstractMat) = @cxx m->empty()
 
@@ -185,4 +248,32 @@ end
 
 function Base.eye(typ, rows, cols)
     @cxx cv::Mat::eye(rows, cols, typ)
+end
+
+### Mat to Array{T,N} conversion
+
+function convert{T}(::Type{Array{T}}, m::AbstractMat)
+    p = convert(Ptr{T}, data(m))
+    rows, cols = size(m)
+    chan = channels(m)
+    arr = pointer_to_array(p, rows*cols*chan)
+    if chan == 1
+        return reshape(arr, cols, rows)
+    else
+        return reshape(arr, chan, cols, rows)
+    end
+end
+
+function convert(::Type{Array}, m::AbstractMat)
+    T = eltype(m)
+    convert(Array{T}, m)
+end
+
+# TODO: Array to cv::Mat conversion
+
+
+function Base.show(io::IO, m::AbstractMat)
+    print(io, string(typeof(m)))
+    print(io, "\n")
+    Base.show(convert(Array, m))
 end
