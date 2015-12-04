@@ -1,4 +1,5 @@
-import Base: convert, eltype, similar, size, getindex, .*, ./, *, /
+import Base: call, convert, eltype, similar, size, show
+import Base: getindex, .*, ./, *, /
 import Cxx: CppEnum
 
 """cv::Scalar_<T>
@@ -15,17 +16,13 @@ typealias AbstractScalar Union{Scalar, Scalar_}
 """cv::Point_<T>
 """
 typealias Point_{T} cxxt"cv::Point_<$T>"
-function Base.call{T}(::Type{Point_{T}}, x, y)
-    icxx"cv::Point_<$T>($x, $y);"
-end
+call{T}(::Type{Point_{T}}, x, y) = icxx"cv::Point_<$T>($x, $y);"
 eltype{T}(p::Point_{T}) = T
 
 """cv::Point3_<T>
 """
 typealias Point3_{T} cxxt"cv::Point3_<$T>"
-function Base.call{T}(::Type{Point3_{T}}, x, y, z)
-    icxx"cv::Point3_<$T>($x, $y, $z);"
-end
+call{T}(::Type{Point3_{T}}, x, y, z) = icxx"cv::Point3_<$T>($x, $y, $z);"
 eltype{T}(p::Point3_{T}) = T
 
 """cv::Point
@@ -38,9 +35,7 @@ typealias AbstractPoint Union{Point, Point_}
 """cv::Size_<T>
 """
 typealias Size_{T} cxxt"cv::Size_<$T>"
-function Base.call{T}(::Type{Size_{T}}, x, y)
-    icxx"cv::Size_<$T>($x, $y);"
-end
+call{T}(::Type{Size_{T}}, x, y) = icxx"cv::Size_<$T>($x, $y);"
 eltype{T}(s::Size_{T}) = T
 
 """cv::Size
@@ -106,12 +101,8 @@ maketype(depth, cn) = mat_depth(depth) + ((cn-1) << CV_CN_SHIFT)
 const Mat = cxxt"cv::Mat"
 
 Mat() = @cxx cv::Mat()
-function Mat(rows, cols, typ)
-    @cxx cv::Mat(rows, cols, typ)
-end
-function Mat(rows, cols, typ, s::AbstractScalar)
-    @cxx cv::Mat(rows, cols, typ, s)
-end
+Mat(rows, cols, typ) = @cxx cv::Mat(rows, cols, typ)
+Mat(rows, cols, typ, s::AbstractScalar) = @cxx cv::Mat(rows, cols, typ, s)
 function Mat(rows, cols, typ, data::Ptr, step=0)
     @cxx cv::Mat(rows, cols, typ, data, step)
 end
@@ -131,10 +122,10 @@ similar_empty(m::Mat) = Mat()
 """
 typealias Mat_{T} cxxt"cv::Mat_<$T>"
 
-Base.call{T}(::Type{Mat_{T}}) = icxx"cv::Mat_<$T>();"
-Base.call{T}(::Type{Mat_{T}}, rows, cols) = icxx"cv::Mat_<$T>($rows, $cols);"
+call{T}(::Type{Mat_{T}}) = icxx"cv::Mat_<$T>();"
+call{T}(::Type{Mat_{T}}, rows, cols) = icxx"cv::Mat_<$T>($rows, $cols);"
 
-function Base.call{T}(::Type{Mat_{T}}, rows, cols, data::Ptr, step=0)
+function call{T}(::Type{Mat_{T}}, rows, cols, data::Ptr, step=0)
     data = convert(Ptr{T}, data)
     icxx"cv::Mat_<$T>($rows, $cols, $data, $step);"
 end
@@ -202,7 +193,7 @@ dims(m::AbstractMat) = icxx"$m.dims;"
 rows(m::AbstractMat) = Int(icxx"$m.rows;")
 cols(m::AbstractMat) = Int(icxx"$m.cols;")
 
-function Base.size(m::AbstractMat)
+function size(m::AbstractMat)
     chan = channels(m)
     if chan == 1
         (Int(rows(m)), Int(cols(m)))
@@ -220,9 +211,7 @@ data(m::Union{Mat, Mat_}) = icxx"$m.data;"
 col(m::AbstractMat, i) = icxx"$m.col($i);"
 row(m::AbstractMat, i) = icxx"$m.row($i);"
 
-function at(m::Union{Mat, Mat_}, T, i, j)
-    icxx"$m.at<$T>($i, $j);"
-end
+at(m::Union{Mat, Mat_}, T, i, j) = icxx"$m.at<$T>($i, $j);"
 
 clone(m::AbstractMat) = @cxx m->clone()
 total(m::AbstractMat) = Int(@cxx m->total())
@@ -264,15 +253,11 @@ function convert{T}(::Type{Array{T}}, m::AbstractMat)
     end
 end
 
-function convert(::Type{Array}, m::AbstractMat)
-    T = eltype(m)
-    convert(Array{T}, m)
-end
+convert(::Type{Array}, m::AbstractMat) = convert(Array{eltype(m)}, m)
 
 # TODO: Array to cv::Mat conversion
 
-
-function Base.show(io::IO, m::AbstractMat)
+function show(io::IO, m::AbstractMat)
     print(io, string(typeof(m)))
     print(io, "\n")
     Base.show(convert(Array, m))
