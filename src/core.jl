@@ -110,8 +110,9 @@ Mat(m::Mat) = @cxx cv::Mat(m)
 function Mat{T,N}(arr::Array{T,N})
     @assert N in 2:3
     depth = cvdepth(T)
-    cn = N - 1
-    Mat(size(arr, 2), size(arr, 1), maketype(depth, cn), pointer(arr))
+    rev_size = reverse(size(arr))
+    cn = (N == 2) ? 1 : rev_size[end]
+    Mat(rev_size[1], rev_size[2], maketype(depth, cn), pointer(arr))
 end
 
 # TODO: should avoid copy
@@ -193,12 +194,13 @@ dims(m::AbstractMat) = icxx"$m.dims;"
 rows(m::AbstractMat) = Int(icxx"$m.rows;")
 cols(m::AbstractMat) = Int(icxx"$m.cols;")
 
+_size(m::AbstractMat) = (Int(rows(m)), Int(cols(m)))
 function size(m::AbstractMat)
     chan = channels(m)
     if chan == 1
-        (Int(rows(m)), Int(cols(m)))
+        return _size(m)
     else
-        (chan, Int(rows(m)), Int(cols(m)))
+        return (Int(rows(m)), Int(cols(m)), chan)
     end
 end
 
@@ -243,7 +245,7 @@ end
 
 function convert{T}(::Type{Array{T}}, m::Union{Mat, Mat_})
     p = convert(Ptr{T}, data(m))
-    rows, cols = size(m)
+    rows, cols = _size(m)
     chan = channels(m)
     arr = pointer_to_array(p, rows*cols*chan)
     if chan == 1
