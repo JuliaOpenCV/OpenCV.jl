@@ -241,7 +241,7 @@ end
 
 ### Mat to Array{T,N} conversion
 
-function convert{T}(::Type{Array{T}}, m::AbstractMat)
+function convert{T}(::Type{Array{T}}, m::Union{Mat, Mat_})
     p = convert(Ptr{T}, data(m))
     rows, cols = size(m)
     chan = channels(m)
@@ -253,12 +253,19 @@ function convert{T}(::Type{Array{T}}, m::AbstractMat)
     end
 end
 
-convert(::Type{Array}, m::AbstractMat) = convert(Array{eltype(m)}, m)
+convert(::Type{Array}, m::Union{Mat, Mat_}) = convert(Array{eltype(m)}, m)
+convert(::Type{Array}, m::UMat) = convert(Array, Mat(m))
 
 # TODO: Array to cv::Mat conversion
 
-function show(io::IO, m::AbstractMat)
+function show(io::IO, m::Union{Mat, Mat_})
     print(io, string(typeof(m)))
     print(io, "\n")
     Base.show(convert(Array, m))
+end
+
+function show(io::IO, m::UMat)
+    print(io, string(typeof(m)))
+    print(io, "\n")
+    Base.show(convert(Array, Mat(m)))
 end
