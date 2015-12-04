@@ -1,4 +1,4 @@
-import Base: similar, size, getindex, .*, ./, *, /
+import Base: eltype, similar, size, getindex, .*, ./, *, /
 import Cxx: CppEnum
 
 """cv::Scalar_<T>
@@ -18,6 +18,7 @@ typealias Point_{T} cxxt"cv::Point_<$T>"
 function Base.call{T}(::Type{Point_{T}}, x, y)
     icxx"cv::Point_<$T>($x, $y);"
 end
+eltype{T}(p::Point_{T}) = T
 
 """cv::Point3_<T>
 """
@@ -25,6 +26,7 @@ typealias Point3_{T} cxxt"cv::Point3_<$T>"
 function Base.call{T}(::Type{Point3_{T}}, x, y, z)
     icxx"cv::Point3_<$T>($x, $y, $z);"
 end
+eltype{T}(p::Point3_{T}) = T
 
 """cv::Point
 """
@@ -39,6 +41,7 @@ typealias Size_{T} cxxt"cv::Size_<$T>"
 function Base.call{T}(::Type{Size_{T}}, x, y)
     icxx"cv::Size_<$T>($x, $y);"
 end
+eltype{T}(s::Size_{T}) = T
 
 """cv::Size
 """
@@ -83,6 +86,7 @@ function Base.call{T}(::Type{Mat_{T}}, rows, cols, data::Ptr, step=0)
     icxx"cv::Mat_<$T>($rows, $cols, $data, $step);"
 end
 
+eltype{T}(m::Mat_{T}) = T
 getindex{T}(m::Mat_{T}, i::Int, j::Int) = icxx"$m.at<$T>($i, $j);"
 
 similar{T}(m::Mat_{T}) = Mat_{T}(rows(m), cols(m))
