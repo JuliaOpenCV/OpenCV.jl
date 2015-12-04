@@ -1,5 +1,5 @@
 function cvtColor(src::AbstractMat, code)
-    dst = Mat()
+    dst = similar_empty(src)
     @cxx cv::cvtColor(src, dst, code)
     return dst
 end
@@ -11,13 +11,13 @@ function resize(src::AbstractMat, shape::NTuple{2})
 end
 
 function resize(src::AbstractMat, s::Size)
-    dst = Mat()
+    dst = similar_empty(src)
     @cxx cv::resize(src, dst, s)
     return dst
 end
 
 function threshold(src::AbstractMat, thresh, maxval, typ)
-    dst = Mat()
+    dst = similar_empty(src)
     @cxx cv::threshold(src, dst, thresh, maxval, typ)
     return dst
 end

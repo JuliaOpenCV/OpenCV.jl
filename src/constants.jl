@@ -1042,3 +1042,9 @@ const ARRAY_BUFFER          = 0x8892
 const ELEMENT_ARRAY_BUFFER  = 0x8893
 const PIXEL_PACK_BUFFER     = 0x88EB
 const PIXEL_UNPACK_BUFFER   = 0x88EC
+
+const ACCESS_READ   = 1<<24
+const ACCESS_WRITE  = 1<<25
+const ACCESS_RW     = 3<<24
+const ACCESS_MASK   = ACCESS_RW
+const ACCESS_FAST   = 1<<26

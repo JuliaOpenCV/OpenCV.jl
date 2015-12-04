@@ -34,7 +34,9 @@ function include_headers(top)
     addHeaderDir(joinpath(top, "opencv2"), kind=C_System)
     addHeaderDir(joinpath(top, "opencv2", "core"), kind=C_System)
     cxxinclude(joinpath(top, "opencv2/opencv.hpp"))
+    cxxinclude(joinpath(top, "opencv2/core/ocl.hpp"))
 end
+
 
 const system_include_top = "/usr/local/include"
 const local_include_top = joinpath(Pkg.dir("OpenCV", "deps", "usr", "include"))
