@@ -107,16 +107,8 @@ function Mat(rows, cols, typ, data::Ptr, step=0)
     @cxx cv::Mat(rows, cols, typ, data, step)
 end
 Mat(m::Mat) = @cxx cv::Mat(m)
-function Mat{T,N}(arr::Array{T,N})
-    @assert N in 2:3
-    depth = cvdepth(T)
-    rev_size = reverse(size(arr))
-    cn = (N == 2) ? 1 : rev_size[end]
-    Mat(rev_size[1], rev_size[2], maketype(depth, cn), pointer(arr))
-end
 
-# TODO: should avoid copy
-similar(m::Mat) = Mat(m)
+similar(m::Mat) = Mat(rows(m), cols(m), maketype(depth(m), channels(m)))
 similar_empty(m::Mat) = Mat()
 
 """cv::Mat_<T>
@@ -168,11 +160,11 @@ const __UMAT_USAGE_FLAGS_32BIT = CppEnum{symbol("cv::UMatUsageFlags")}(0x7ffffff
 """
 const UMat = cxxt"cv::UMat"
 
-UMat(usage_flags=USAGE_DEFAULT) = @cxx cv::UMat(usage_flags)
-function UMat(rows, cols, typ, usage_flags=USAGE_DEFAULT)
+UMat(usage_flags::CppEnum=USAGE_DEFAULT) = @cxx cv::UMat(usage_flags)
+function UMat(rows, cols, typ, usage_flags::CppEnum=USAGE_DEFAULT)
     @cxx cv::UMat(rows, cols, typ, usage_flags)
 end
-function UMat(rows, cols, typ, s::AbstractScalar, usage_flags=USAGE_DEFAULT)
+function UMat(rows, cols, typ, s::AbstractScalar, usage_flags::CppEnum=USAGE_DEFAULT)
     @cxx cv::UMat(rows, cols, typ, s, usage_flags)
 end
 UMat(m::Union{Mat, Mat_}, flags=ACCESS_READ) = @cxx m->getUMat(flags)
@@ -241,7 +233,7 @@ function Base.eye(typ, rows, cols)
     @cxx cv::Mat::eye(rows, cols, typ)
 end
 
-### Mat to Array{T,N} conversion
+### Mat to Array{T,N} conversion ###
 
 function convert{T}(::Type{Array{T}}, m::Union{Mat, Mat_})
     p = convert(Ptr{T}, data(m))
@@ -258,16 +250,34 @@ end
 convert(::Type{Array}, m::Union{Mat, Mat_}) = convert(Array{eltype(m)}, m)
 convert(::Type{Array}, m::UMat) = convert(Array, Mat(m))
 
-# TODO: Array to cv::Mat conversion
+### Array{T,N} to Mat conversion ###
 
-function show(io::IO, m::Union{Mat, Mat_})
-    print(io, string(typeof(m)))
-    print(io, "\n")
-    Base.show(convert(Array, m))
+function convert{T,N}(::Type{Mat}, arr::Array{T,N})
+    if N != 2 && N != 3
+        error("Not supported conversion")
+    end
+    depth = cvdepth(T)
+    rev_size = reverse(size(arr))
+    cn = (N == 2) ? 1 : rev_size[end]
+    typ = maketype(depth, cn)
+    Mat(rev_size[1], rev_size[2], typ, pointer(arr))
 end
 
-function show(io::IO, m::UMat)
-    print(io, string(typeof(m)))
+function convert{T}(::Type{Mat_{T}}, arr::Matrix{T})
+    Mat_{T}(size(arr, 2), size(arr, 1), pointer(arr))
+end
+
+convert(::Type{UMat}, arr::Array) = UMat(convert(Mat, arr))
+
+function _showjlarray(io::IO, arr::Array)
+    print(io, "[Julia] ")
+    Base.show(io, arr)
+end
+
+function show(io::IO, m::Union{Mat, Mat_, UMat})
+    print(io, "[C++]   ")
+    print(io, string(rows(m), "x", cols(m), " (channel:", channels(m), ") ",
+        typeof(m)))
     print(io, "\n")
-    Base.show(convert(Array, Mat(m)))
+    _showjlarray(io, convert(Array, m))
 end
