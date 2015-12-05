@@ -2,6 +2,8 @@ function imshow(winname::AbstractString, mat::AbstractMat)
     @cxx cv::imshow(pointer(winname), mat)
 end
 
+imshow(winname::AbstractString, arr::Array) = imshow(winname, Mat(arr))
+
 function destroyWindow(winname::AbstractString)
     @cxx cv::destroyWindow(pointer(winname))
 end
