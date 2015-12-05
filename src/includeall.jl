@@ -44,7 +44,7 @@ const local_include_top = joinpath(Pkg.dir("OpenCV", "deps", "usr", "include"))
 if isdir(local_include_top)
     VERBOSE && info("Including headers from local path: $local_include_top")
     include_headers(local_include_top)
-elseif isdir(joinpath(system_include_top, "OpenCV"))
+elseif isdir(joinpath(system_include_top, "opencv2"))
     VERBOSE && info("Including headers from system path: $system_include_top")
     include_headers(system_include_top)
 else
