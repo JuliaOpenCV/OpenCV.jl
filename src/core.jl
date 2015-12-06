@@ -1,6 +1,5 @@
-import Base: call, convert, eltype, similar, size, show
-import Base: getindex, .*, ./, *, /
-import Cxx: CppEnum
+import Base: call, convert, eltype, similar, show
+import Base: size, getindex, setindex!
 
 """cv::Scalar_<T>
 """
@@ -67,7 +66,7 @@ function jltype(depth::Int)
     elseif depth == CV_64F
         return Float64
     else
-        @assert false && "This shouldn't happen"
+        error("This shouldn't happen")
     end
 end
 
@@ -96,6 +95,15 @@ end
 mat_depth(flags) = flags & CV_MAT_DEPTH_MASK
 maketype(depth, cn) = mat_depth(depth) + ((cn-1) << CV_CN_SHIFT)
 
+"""cv::MatExpr
+"""
+const MatExpr = cxxt"cv::MatExpr"
+
+function size(expr::MatExpr)
+    s::Size = @cxx expr->size()
+    height(s), width(s)
+end
+
 """cv::Mat
 """
 const Mat = cxxt"cv::Mat"
@@ -107,6 +115,16 @@ function Mat(rows, cols, typ, data::Ptr, step=0)
     @cxx cv::Mat(rows, cols, typ, data, step)
 end
 Mat(m::Mat) = @cxx cv::Mat(m)
+
+function eltype(m::Mat)
+    cn = channels(m)
+    T = jltype(depth(m))
+    cn == 1 && return T
+    return Vector{T, cn}
+end
+getindex(m::Mat, i::Int, j::Int) =
+    convert(eltype(m), icxx"$m.at<$(eltype(m))>($i-1, $j-1);")
+setindex!(m::Mat, v, i::Int, j::Int)= icxx"$m.at<$(eltype(m))>($i-1, $j-1) = $v;"
 
 similar(m::Mat) = Mat(rows(m), cols(m), maketype(depth(m), channels(m)))
 similar_empty(m::Mat) = Mat()
@@ -124,30 +142,13 @@ function call{T}(::Type{Mat_{T}}, rows, cols, data::Ptr, step=0)
 end
 
 eltype{T}(m::Mat_{T}) = T
-getindex{T}(m::Mat_{T}, i::Int, j::Int) = icxx"$m.at<$T>($i, $j);"
+getindex{T}(m::Mat_{T}, i::Int, j::Int) = convert(T, icxx"$m($i-1, $j-1);")
+setindex!(m::Mat_, v, i::Int, j::Int) = icxx"$m($i-1, $j-1) = $v;"
 
 similar{T}(m::Mat_{T}) = Mat_{T}(rows(m), cols(m))
 similar_empty{T}(m::Mat_{T}) = Mat_{T}()
 
-# TODO: simpler implentation
-function .*{T}(x::Mat_{T}, y::Real)
-    mat = Mat_{T}(rows(x), cols(x))
-    copyTo(x, mat)
-    icxx"""
-        for (int i = 0; i < $x.rows; ++i) {
-            for (int j = 0; j < $x.cols; ++j) {
-                $mat.at<$T>(i, j) = $x.at<$T>(i, j) * $y;
-            }
-        }
-    """
-    mat
-end
-
-.*(x::Real, y::Mat_) = y .* x
-./(x::Mat_, y::Real) = x .* (1.0/y)
-*(x::Mat_, y::Real) = x .* y
-*(x::Real, y::Mat_) = y * x
-/(x::Mat_, y::Real) = x ./ (1.0/y)
+import Cxx: CppEnum
 
 # UMatUsageFlags
 const USAGE_DEFAULT = CppEnum{symbol("cv::UMatUsageFlags")}(0)
@@ -180,6 +181,7 @@ elemSize1(m::UMat) = Int(@cxx m->elemSize1())
 
 # TODO: hope Cxx can handle C++ inheritance
 typealias AbstractMat Union{Mat, Mat_, UMat}
+typealias AbstractMatOrMatExpr Union{AbstractMat, MatExpr}
 
 flags(m::AbstractMat) = icxx"$m.flags;"
 dims(m::AbstractMat) = icxx"$m.dims;"
@@ -220,6 +222,51 @@ function copyTo(src::AbstractMat, dst::AbstractMat)
     @cxx src->copyTo(dst)
     return dst
 end
+
+import Base: +, -, .*, ./, *, /, transpose, inv, ^, min, max
+
++(x::AbstractMatOrMatExpr, y::AbstractMatOrMatExpr) = @cxx x + y
++(x::AbstractMatOrMatExpr, y::Real) = @cxx x + y
++(x::Real, y::AbstractMatOrMatExpr) = y + x
++(x::AbstractMatOrMatExpr) = x
+
+-(x::AbstractMatOrMatExpr, y::AbstractMatOrMatExpr) = @cxx x - y
+-(x::AbstractMatOrMatExpr, y::Real) = @cxx x - y
+-(x::Real, y::AbstractMatOrMatExpr) = @cxx x - y
+-(x::AbstractMatOrMatExpr) = icxx"-$x;"
+
+.*(x::AbstractMatOrMatExpr, y::Real) = @cxx x * y
+.*(x::Real, y::AbstractMatOrMatExpr) = y .* x
+*(x::AbstractMatOrMatExpr, y::Real) = x .* y
+*(x::Real, y::AbstractMatOrMatExpr) = x .* y
+./(x::AbstractMatOrMatExpr, y::Real) = @cxx x / y
+./(x::Real, y::AbstractMatOrMatExpr) = @cxx x / y
+/(x::AbstractMatOrMatExpr, y::Real) = x ./ y
+/(x::Real, y::AbstractMatOrMatExpr) = x ./ y
+
+*(x::AbstractMatOrMatExpr, y::AbstractMatOrMatExpr) = @cxx x * y
+
+transpose(x::AbstractMatOrMatExpr) = icxx"$x.t();"
+inv(x::AbstractMatOrMatExpr, method=DECOMP_SVD) = icxx"$x.inv($method);"
+
+min(x::AbstractMat, y::AbstractMat) = icxx"cv::min($x, $y);"
+min(x::AbstractMat, y::Real) = icxx"cv::min($x, $y);"
+min(x::Real, y::AbstractMat) = icxx"cv::min($x, $y);"
+min(x::AbstractMat, y::MatExpr) = min(x, Mat(y))
+min(x::MatExpr, y::AbstractMat) = min(Mat(x), y)
+min(x::MatExpr, y::MatExpr) = min(Mat(x), Mat(y))
+min(x::MatExpr, y::Real) = min(Mat(x), y)
+min(x::Real, y::MatExpr) = min(x, Mat(y))
+
+max(x::AbstractMat, y::AbstractMat) = icxx"cv::max($x, $y);"
+max(x::AbstractMat, y::Real) = icxx"cv::max($x, $y);"
+max(x::Real, y::AbstractMat) = icxx"cv::max($x, $y);"
+max(x::AbstractMat, y::MatExpr) = max(x, Mat(y))
+max(x::MatExpr, y::AbstractMat) = max(Mat(x), y)
+max(x::MatExpr, y::MatExpr) = max(Mat(x), Mat(y))
+max(x::MatExpr, y::Real) = max(Mat(x), y)
+max(x::Real, y::MatExpr) = max(x, Mat(y))
+
 
 function Base.zeros(typ, rows, cols)
     @cxx cv::Mat::zeros(rows, cols, typ)
@@ -269,6 +316,17 @@ end
 
 convert(::Type{UMat}, arr::Array) = UMat(convert(Mat, arr))
 
+### Mat expression to Mat ###
+
+cxx"""
+cv::Mat expr_to_mat(cv::MatExpr& expr) {
+    cv::Mat mat(expr);
+    return mat;
+}
+"""
+convert(::Type{Mat}, ex::MatExpr) = @cxx expr_to_mat(ex)
+convert(::Type{Array}, ex::MatExpr) = convert(Array, Mat(ex))
+
 function _showjlarray(io::IO, arr::Array)
     print(io, "[Julia] ")
     Base.show(io, arr)
@@ -279,5 +337,13 @@ function show(io::IO, m::Union{Mat, Mat_, UMat})
     print(io, string(rows(m), "x", cols(m), " (channel:", channels(m), ") ",
         typeof(m)))
     print(io, "\n")
-    _showjlarray(io, convert(Array, m))
+    _showjlarray(io, transpose(convert(Array, m)))
+end
+
+function show(io::IO, expr::MatExpr)
+    print(io, "[C++]   ")
+    rows, cols = size(expr)
+    print(io, string(rows, "x", cols, " ", typeof(expr)))
+    print(io, "\n")
+    print(io, transpose(convert(Array, expr)))
 end
