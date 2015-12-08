@@ -1051,3 +1051,4 @@ const ACCESS_FAST   = 1<<26
 
 const CV_DEPTH_MAX      = 1 << CV_CN_SHIFT
 const CV_MAT_DEPTH_MASK = CV_DEPTH_MAX - 1
+const CV_MAT_CN_MASK    = ((CV_CN_MAX - 1) << CV_CN_SHIFT)

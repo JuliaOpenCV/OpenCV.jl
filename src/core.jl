@@ -93,6 +93,7 @@ function cvdepth(T)
 end
 
 mat_depth(flags) = flags & CV_MAT_DEPTH_MASK
+mat_channel(flags) = flags & CV_MAT_CN_MASK
 maketype(depth, cn) = mat_depth(depth) + ((cn-1) << CV_CN_SHIFT)
 
 """cv::MatExpr
