@@ -2,51 +2,45 @@ using OpenCV
 using Base.Test
 
 
-@testset "cv::Mat" begin
-    mat = cv2.Mat()
+@testset "Mat{T,N}" begin
+    mat = cv2.Mat{Float64}()
     @test cv2.empty(mat)
 
-    cols, rows = 10, 20
-    mat = cv2.Mat(rows, cols, cv2.CV_8U)
-    @test size(mat) == (rows, cols)
+    mat = cv2.Mat{UInt8}(10, 20)
+    @test size(mat) == (10, 20)
     @test cv2.channels(mat) == 1
     @test !cv2.empty(mat)
 
-    mat = cv2.Mat(10, 20, cv2.CV_8UC2)
+    mat = cv2.Mat{UInt8}(10, 20, 2)
     @test cv2.channels(mat) == 2
+    @test size(mat) == (10, 20, 2)
 
-    mat = cv2.Mat(10, 20, cv2.CV_8UC3)
+    mat = cv2.Mat{UInt8}(10, 20, 3)
     @test cv2.channels(mat) == 3
+    @test size(mat) == (10, 20, 3)
 
     @testset "Array to cv::Mat conversion" begin
         arr = rand(Float64, 10, 2)
         m = cv2.Mat(arr)
-        @test isa(m, cv2.Mat)
         @test eltype(m) == eltype(arr)
         @test size(arr) == reverse(size(m))
     end
 end
 
-@testset "cv::Mat_<T>" begin
-    x = ones(Float64, 3, 3)
-    mat = cv2.Mat_{Float64}(x)
-    @test eltype(mat) == Float64
-    @test size(mat) == (3, 3)
-end
-
-@testset "cv::UMat" begin
-    umat = cv2.UMat(3, 3, cv2.CV_8U)
+@testset "UMat{T,N}" begin
+    umat = cv2.UMat{UInt8}(3, 3)
     mat = cv2.Mat(umat)
     @test isa(mat, cv2.Mat)
+    @test size(umat) == (3, 3)
 
     @testset "make sure cv2.resize doesn't change the type of mat" begin
-        umat_resized = cv2.resize(umat, (cv2.rows(umat), cv2.cols(umat)))
+        umat_resized = cv2.resize(umat, size(umat))
         @test isa(umat_resized, cv2.UMat)
         @test size(umat) == size(umat_resized)
     end
 end
 
-@testset "Mat arithmetic and linear algebra" begin
+@testset "Matrix operations" begin
     x = map(Float64, reshape([1:24;], 2,3*4))
     #=
     2x12 Array{Float64,2}:
@@ -57,35 +51,73 @@ end
     xt = x'
     m = cv2.Mat(xt)
     @test isa(m, cv2.Mat)
+    @test all(x .== m)
 
-    # TODO: should implement .== operator for cv::Mat
-    @test x[1,1] == m[1,1]
-    @test x[1,2] == m[1,2]
+    @testset "+" begin
+        let ret = m + m
+            retmat = cv2.Mat(ret)
+            @test all(retmat .== 2x)
+        end
+    end
+
+    @testset "-" begin
+        let ret = m - m
+            retmat = cv2.Mat(ret)
+            @test all(retmat .== 0)
+        end
+    end
 
     @testset ".*" begin
         let ret = m .* 5
             @test isa(ret, cv2.MatExpr)
             retmat = cv2.Mat(ret)
-            @test Float64(retmat[1,1]) == x[1,1] * 5
+            @test all(retmat .== 5x)
         end
     end
 
     @testset "./" begin
-        let ret = m ./ 5
+        let ret = m ./ 2
             @test isa(ret, cv2.MatExpr)
             retmat = cv2.Mat(ret)
-            @test Float64(retmat[1,1]) == x[1,1] / 5
+            expected = x ./ 2
+            @test all(retmat .== expected)
+        end
+    end
+
+    @testset "*" begin
+        @test cv2.Mat(m * m') == x * x'
+    end
+
+    @testset "transpose" begin
+        let retexpr = m'
+            retmat = cv2.Mat(retexpr)
+            @test all(retmat .== x')
         end
     end
 
     @testset "inv" begin
-        let retexpr = m * m'
-            @test isa(retexpr, cv2.MatExpr)
-            retmat = cv2.Mat(retexpr)
-            retarr = x * x'
-            for j in 1:2, i in 1:2
-                @test retmat[i,j] == retarr[i,j]
-            end
+        let square_mat = m * m'
+            #=
+            2x2 Array{Float64,2}:
+            2300.0  2444.0
+            2444.0  2600.0
+            =#
+            inv_x = inv(x * x')
+            ret = inv(square_mat)
+            inv_m = cv2.Mat(ret)
+            @test_approx_eq inv_x inv_m
         end
     end
+end
+
+@testset "Matrix channels" begin
+    @test cv2.mat_channel(cv2.CV_32FC1) == 1
+    @test cv2.mat_channel(cv2.CV_32FC2) == 2
+    @test cv2.mat_channel(cv2.CV_32FC3) == 3
+    @test cv2.mat_channel(cv2.CV_32FC4) == 4
+
+    @test cv2.mat_channel(cv2.CV_8UC1) == 1
+    @test cv2.mat_channel(cv2.CV_8UC2) == 2
+    @test cv2.mat_channel(cv2.CV_8UC3) == 3
+    @test cv2.mat_channel(cv2.CV_8UC4) == 4
 end

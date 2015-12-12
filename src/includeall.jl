@@ -54,6 +54,7 @@ end
 for fname in [
     "constants",
     "core",
+    "mat",
     "imgcodecs",
     "imgproc",
     "highgui",
