@@ -121,3 +121,35 @@ end
     @test cv2.mat_channel(cv2.CV_8UC3) == 3
     @test cv2.mat_channel(cv2.CV_8UC4) == 4
 end
+
+@testset "Matrix depth" begin
+    for flags in [
+            cv2.CV_32FC1,
+            cv2.CV_32FC2,
+            cv2.CV_32FC3,
+            cv2.CV_32FC4
+            ]
+        @test cv2.mat_depth(flags) == cv2.CV_32F
+    end
+
+    for flags in [
+            cv2.CV_8UC1,
+            cv2.CV_8UC2,
+            cv2.CV_8UC3,
+            cv2.CV_8UC4
+            ]
+        @test cv2.mat_depth(flags) == cv2.CV_8U
+    end
+end
+
+@testset "maketype" begin
+    @test cv2.maketype(cv2.CV_8U, 1) == cv2.CV_8UC1
+    @test cv2.maketype(cv2.CV_8U, 2) == cv2.CV_8UC2
+    @test cv2.maketype(cv2.CV_8U, 3) == cv2.CV_8UC3
+    @test cv2.maketype(cv2.CV_8U, 4) == cv2.CV_8UC4
+
+    @test cv2.maketype(cv2.CV_32F, 1) == cv2.CV_32FC1
+    @test cv2.maketype(cv2.CV_32F, 2) == cv2.CV_32FC2
+    @test cv2.maketype(cv2.CV_32F, 3) == cv2.CV_32FC3
+    @test cv2.maketype(cv2.CV_32F, 4) == cv2.CV_32FC4
+end

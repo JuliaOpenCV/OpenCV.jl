@@ -2,16 +2,14 @@
 """
 typealias VideoCapture cxxt"cv::VideoCapture"
 
-function VideoCapture(idx::Int)
-    @cxx cv::VideoCapture(idx)
-end
+VideoCapture(idx::Int) = @cxx cv::VideoCapture(idx)
 
-function Base.read(cap::VideoCapture)
-    img = Mat()
-    ok = @cxx cap->read(img)
+import Base: read
+
+function read(cap::VideoCapture)
+    img = Mat{UInt8}()
+    ok = @cxx cap->read(handle(img))
     return ok, img
 end
 
-function release(cap::VideoCapture)
-    @cxx cap->release()
-end
+release(cap::VideoCapture) = @cxx cap->release()

@@ -1,51 +1,44 @@
 import Base: call, convert, eltype, size
 
-"""cv::Scalar_<T>
-"""
-typealias Scalar_{T} cxxt"cv::Scalar_<$T>"
+"""cv::Scalar_<T>"""
+typealias cvScalar_{T} cxxt"cv::Scalar_<$T>"
 
-"""cv::Scalar
-"""
-const Scalar = cxxt"cv::Scalar"
-Scalar(v) = @cxx cv::Scalar(v)
+"""cv::Scalar"""
+const cvScalar = cxxt"cv::Scalar"
+cvScalar(v) = @cxx cv::Scalar(v)
 
-typealias AbstractScalar Union{Scalar, Scalar_}
+typealias AbstractCvScalar Union{cvScalar, cvScalar_}
 
-"""cv::Point_<T>
-"""
-typealias Point_{T} cxxt"cv::Point_<$T>"
-call{T}(::Type{Point_{T}}, x, y) = icxx"cv::Point_<$T>($x, $y);"
-eltype{T}(p::Point_{T}) = T
+"""cv::Point_<T>"""
+typealias cvPoint_{T} cxxt"cv::Point_<$T>"
+call{T}(::Type{cvPoint_{T}}, x, y) = icxx"cv::Point_<$T>($x, $y);"
+eltype{T}(p::cvPoint_{T}) = T
 
-"""cv::Point3_<T>
-"""
-typealias Point3_{T} cxxt"cv::Point3_<$T>"
-call{T}(::Type{Point3_{T}}, x, y, z) = icxx"cv::Point3_<$T>($x, $y, $z);"
-eltype{T}(p::Point3_{T}) = T
+"""cv::Point3_<T>"""
+typealias cvPoint3_{T} cxxt"cv::Point3_<$T>"
+call{T}(::Type{cvPoint3_{T}}, x, y, z) = icxx"cv::Point3_<$T>($x, $y, $z);"
+eltype{T}(p::cvPoint3_{T}) = T
 
-"""cv::Point
-"""
-typealias Point cxxt"cv::Point"
-Point(x, y) = @cxx cv::Point(x, y)
+"""cv::Point"""
+typealias cvPoint cxxt"cv::Point"
+cvPoint(x, y) = @cxx cv::Point(x, y)
 
-typealias AbstractPoint Union{Point, Point_}
+typealias AbstractCvPoint Union{cvPoint, cvPoint_}
 
-"""cv::Size_<T>
-"""
-typealias Size_{T} cxxt"cv::Size_<$T>"
-call{T}(::Type{Size_{T}}, x, y) = icxx"cv::Size_<$T>($x, $y);"
-eltype{T}(s::Size_{T}) = T
+"""cv::Size_<T>"""
+typealias cvSize_{T} cxxt"cv::Size_<$T>"
+call{T}(::Type{cvSize_{T}}, x, y) = icxx"cv::Size_<$T>($x, $y);"
+eltype{T}(s::cvSize_{T}) = T
 
-"""cv::Size
-"""
-typealias Size cxxt"cv::Size"
-Size(x, y) = @cxx cv::Size(x, y)
+"""cv::Size"""
+typealias cvSize cxxt"cv::Size"
+cvSize(x, y) = @cxx cv::Size(x, y)
 
-typealias AbstractSize Union{Size, Size_}
+typealias AbstractCvSize Union{cvSize, cvSize_}
 
-height(s::AbstractSize) = Int(@cxx s->height)
-width(s::AbstractSize) = Int(@cxx s->width)
-area(s::AbstractSize) = Int(@cxx s->area())
+height(s::AbstractCvSize) = Int(@cxx s->height)
+width(s::AbstractCvSize) = Int(@cxx s->width)
+area(s::AbstractCvSize) = Int(@cxx s->area())
 
 """Determine julia type from the depth of cv::Mat
 """

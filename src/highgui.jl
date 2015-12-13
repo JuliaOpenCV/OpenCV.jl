@@ -9,4 +9,4 @@ destroyWindow(winname::AbstractString) = @cxx cv::destroyWindow(pointer(winname)
 destroyAllWindows() = @cxx cv::destroyAllWindows()
 
 waitKey(delay) = @cxx cv::waitKey(delay)
-waitKey(;delay::Int=0) = waitkey(delay)
+waitKey(;delay::Int=0) = waitKey(delay)

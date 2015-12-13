@@ -6,11 +6,11 @@ end
 
 function resize(src::AbstractCvMat, shape::NTuple{2})
     w, h = shape
-    s = Size(w, h)
+    s = cvSize(w, h)
     return resize(src, s)
 end
 
-function resize(src::AbstractCvMat, s::Size)
+function resize(src::AbstractCvMat, s::cvSize)
     dst = similar_empty(src)
     @cxx cv::resize(handle(src), handle(dst), s)
     return dst

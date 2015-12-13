@@ -1,18 +1,19 @@
-"""
-Abstract type that represents N-dimentional array in OpenCV
+import Base: size, eltype, call, similar, convert, show
 
-NOTE: subtypes of AbstractCvMat should have `handle` as a member.
+"""AbstractCvMat{T,N} represents `N`-dimentional arrays in OpenCV (cv::Mat,
+cv::UMat, etc), which element type are bound to `T`.
 """
 abstract AbstractCvMat{T,N} <: AbstractArray{T,N}
 
-import Base: size, eltype, call, similar, convert, show
+# NOTE: subtypes of AbstractCvMat should have `handle` as a member.
+handle(m::AbstractCvMat) = m.handle
 
 
 ### Types and methods for C++ types ###
 
 const cvMatExpr = cxxt"cv::MatExpr"
 function _size(expr::cvMatExpr)
-    s::Size = @cxx expr->size()
+    s::cvSize = @cxx expr->size()
     height(s), width(s)
 end
 _type(m::cvMatExpr) = icxx"$m.type();"
@@ -49,8 +50,6 @@ elemSize1(m::cvUMat) = Int(@cxx m->elemSize1())
 
 ### Methods for AbstractCvMat ###
 
-handle(m::AbstractCvMat) = m.handle
-
 flags(m::AbstractCvMat) = icxx"$(m.handle).flags;"
 dims(m::AbstractCvMat) = icxx"$(m.handle).dims;"
 rows(m::AbstractCvMat) = convert(Int, icxx"$(m.handle).rows;")
@@ -77,9 +76,12 @@ empty(m::AbstractCvMat) = icxx"$(m.handle).empty();"
 
 ### MatExpr{T,N} ###
 
-"""A thin wrapper for cv::MatExpr
+"""MatExpr{T,N} represents cv::MatExpr with encoded type information
 
-TODO: should consder wherther I make this a subtype of AbstractCvMat{T,N} or not
+`T` and `N` represents the element type and the dimension of Mat,
+respectively.
+
+TODO: should consder wherther I make this a subtype of AbstractCvMat{T,N}
 """
 type MatExpr{T,N}
     handle::cvMatExpr
@@ -97,15 +99,15 @@ function call(::Type{MatExpr}, handle::cvMatExpr)
 end
 
 
-"""A thin wrapper of cv::Mat
+"""Mat{T,N} represents cv::Mat with encoded type information
 
-Mat{T,N} keeps cv::Mat instance with explicit type information:
-element type `T` and dimention `N`. Hence, in fact it behaves like
-cv::Mat_<T>.
+Mat{T,N} keeps cv::Mat instance with: element type `T` and dimention `N`.
+Hence, in fact it behaves like cv::Mat_<T>. Note that Mat stores its
+internal data in column-major order, while Julia's arrays are in row-major.
 
-NOTE: this type supports multi-channel 2-dimentional matrices and
-singla-channel 2-dimentional maticies for now. Should be extended for
-N-dimentional cases though.
+NOTE: Mat{T,N} supports multi-channel 2-dimentional matrices and
+single-channel 2-dimentional matrices for now. Should be extended for
+N-dimentional cases.
 """
 type Mat{T,N} <: AbstractCvMat{T,N}
     handle::cvMat
@@ -125,9 +127,13 @@ function call(::Type{Mat}, handle::cvMat)
 end
 
 """Empty mat constructor"""
+function call{T,N}(::Type{Mat{T,N}})
+    handle = @cxx cv::Mat()
+    Mat{T,N}(handle)
+end
 function call{T}(::Type{Mat{T}})
     handle = @cxx cv::Mat()
-    Mat{T,0}(handle)
+    Mat{T,2}(handle)
 end
 
 """Single-channel 2-dimentional mat constructor"""
@@ -195,6 +201,9 @@ function getindex{T}(m::Mat{T}, i::Int, j::Int, k::Int)
 
     return val
 end
+
+setindex!(m::Mat, v, i::Int) =
+    icxx"$(m.handle).at<$(eltype(m))>($i-1) = $v;"
 setindex!(m::Mat, v, i::Int, j::Int) =
     icxx"$(m.handle).at<$(eltype(m))>($i-1, $j-1) = $v;"
 function setindex!{T}(m::Mat{T}, v, i::Int, j::Int, k::Int)
@@ -214,9 +223,10 @@ end
 
 ### UMat{T,N} ###
 
-"""A thin wrapper foor cv::UMat
+"""UMat{T,N} represents cv::UMat with encoded type information
 
-Similar to Mat{T,N}, UMat{T,N} has encoded type parameters.
+`T` and `N` represents the element type and the dimension of Mat,
+respectively.
 """
 type UMat{T,N} <: AbstractCvMat{T,N}
     handle::cvUMat
@@ -283,7 +293,8 @@ end
 
 ### AbstractCvMat{T,N} to MatExpr{T,N}
 
-convert(::Type{MatExpr}, m::AbstractCvMat) = MatExpr(@cxx cv::MatExpr(m.handle))
+convert(::Type{MatExpr}, m::AbstractCvMat) =
+    MatExpr(@cxx cv::MatExpr(m.handle))
 convert{T,N}(::Type{MatExpr{T,N}}, m::AbstractCvMat{T,N}) =
     MatExpr{T,N}(@cxx cv::MatExpr(m.handle))
 convert(::Type{MatExpr}, m::UMat) = convert(MatExpr, convert(Mat, m))
@@ -317,7 +328,7 @@ function convert{T,N}(::Type{Array}, m::Mat{T,N})
 end
 
 
-### Arithmetic operations ###
+### Matrix operations ###
 
 import Base: +, -, .*, ./, *, /, transpose, ctranspose
 import Base: promote_rule
