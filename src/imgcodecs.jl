@@ -1,8 +1,9 @@
 function imread(name::AbstractString, flag=IMREAD_UNCHANGED)
-    @cxx cv::imread(pointer(name), flag)
+    Mat(@cxx cv::imread(pointer(name), flag))
 end
 
-imwrite(filename::AbstractString, img) = @cxx cv::imwrite(pointer(filename), img)
-function imwrite(filename::AbstractString, img, params)
-    @cxx cv::imwrite(pointer(filename), img, params)
+imwrite(filename::AbstractString, img::Mat) =
+    @cxx cv::imwrite(pointer(filename), handle(img))
+function imwrite(filename::AbstractString, img::Mat, params)
+    @cxx cv::imwrite(pointer(filename), handle(img), params)
 end
