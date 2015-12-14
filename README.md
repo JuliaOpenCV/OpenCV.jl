@@ -38,6 +38,21 @@ Before using OpenCV.jl, you will need to add the opencv libraries path to `LD_LI
 export DYLD_LIBRARY_PATH=$HOME/.julia/v0.5/OpenCV/deps/usr/lib:$DYLD_LIBRARY_PATH
 ```
 
-## Examples
+## A minimum example
 
-See [examples](./examples).
+```jl
+using OpenCV
+
+img = cv2.imread("test.jpg")
+img = cv2.UMat(img)
+gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+bin = cv2.threshold(gray, 170, 255, cv2.THRESH_OTSU)
+
+cv2.imwrite("test_bin.jpg", bin)
+```
+
+See [examples](./examples) directory for more examples.
+
+## Note
+
+You might know there already exists a Julia wrapper for opencv: [OpenCV.jl](https://github.com/maxruby/OpenCV.jl). The reason why I created a new one is that I wanted to start with a small code base and re-design the interface. 
