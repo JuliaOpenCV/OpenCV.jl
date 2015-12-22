@@ -2,6 +2,8 @@
 
 A Julia wrapper for [OpenCV](https://github.com/Itseez/opencv) based on Cxx.jl
 
+![examples/data/video_thresholding.gif](examples/data/video_thresholding.gif)
+
 Note that OpenCV.jl was started as an experimental project and not full-featured for now.
 
 ## Features
@@ -55,4 +57,4 @@ See [examples](./examples) directory for more examples.
 
 ## Note
 
-You might know there already exists a Julia wrapper for opencv: [OpenCV.jl](https://github.com/maxruby/OpenCV.jl). The reason why I created a new one is that I wanted to start with a small code base and re-design the interface. 
+You might know there already exists a Julia wrapper for opencv: [OpenCV.jl](https://github.com/maxruby/OpenCV.jl). The reason why I created a new one is that I wanted to start with a small code base and re-design the interface.
