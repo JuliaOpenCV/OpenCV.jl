@@ -3,7 +3,7 @@ using Compat
 
 @BinDeps.setup
 
-opencv_version = "3.0.0"
+opencv_version = "3.1.0"
 
 opencv_core = library_dependency("libopencv_core")
 opencv_highgui = library_dependency("libopencv_highgui")
