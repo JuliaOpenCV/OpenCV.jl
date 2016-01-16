@@ -4,7 +4,7 @@ A Julia wrapper for [OpenCV](https://github.com/Itseez/opencv) based on Cxx.jl
 
 <div align="center"><img src="examples/data/video_thresholding.gif"></div>
 
-Note that OpenCV.jl was started as an experimental project and not full-featured for now.
+Note that OpenCV.jl was started as an experimental project and not full-featured.
 
 ## Features
 
