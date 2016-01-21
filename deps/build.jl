@@ -5,11 +5,26 @@ using Compat
 
 opencv_version = "3.1.0"
 
-opencv_core = library_dependency("libopencv_core")
-opencv_highgui = library_dependency("libopencv_highgui")
-opencv_imgcodecs = library_dependency("libopencv_imgcodecs")
-opencv_imgproc = library_dependency("libopencv_imgproc")
-opencv_videoio = library_dependency("libopencv_videoio")
+ignore_paths = split(strip(get(ENV, "OPENCVJL_LIBRARY_IGNORE_PATH", "")), ':')
+
+# default validate function
+default_validate = function(libpath, handle)
+    for path in ignore_paths
+        isempty(path) && continue
+        ismatch(Regex("^$(path)"), libpath) && return false
+    end
+    return true
+end
+
+function cv2_library_dependency(s, validate=default_validate)
+    library_dependency(s, validate=validate)
+end
+
+opencv_core = cv2_library_dependency("libopencv_core")
+opencv_highgui = cv2_library_dependency("libopencv_highgui")
+opencv_imgcodecs = cv2_library_dependency("libopencv_imgcodecs")
+opencv_imgproc = cv2_library_dependency("libopencv_imgproc")
+opencv_videoio = cv2_library_dependency("libopencv_videoio")
 
 opencv_libs = [
     opencv_core,
