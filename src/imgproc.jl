@@ -1,6 +1,6 @@
 function cvtColor(src::AbstractCvMat, code)
     dst = similar_empty(src)
-    @cxx cv::cvtColor(handle(src), handle(dst), code)
+    icxx"cv::cvtColor($(handle(src)), $(handle(dst)), $code);"
     return dst
 end
 
@@ -12,7 +12,7 @@ end
 
 function resize(src::AbstractCvMat, s::cvSize)
     dst = similar_empty(src)
-    @cxx cv::resize(handle(src), handle(dst), s)
+    icxx"cv::resize($(handle(src)), $(handle(dst)), $s);"
     return dst
 end
 

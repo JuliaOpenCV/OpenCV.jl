@@ -91,7 +91,7 @@ handle(m::MatExpr) = m.handle
 channels(m::MatExpr) = channels(handle(m))
 size(m::MatExpr) = size(handle(m))
 
-function call(::Type{MatExpr}, handle::cvMatExpr)
+function (::Type{MatExpr})(handle::cvMatExpr)
     # determin type parameters by value
     T = eltype(handle)
     N = length(size(handle))
@@ -117,7 +117,7 @@ end
 ### Constructors ###
 
 """Generic constructor"""
-function call(::Type{Mat}, handle::cvMat)
+function (::Type{Mat})(handle::cvMat)
     # Determine dimention and element type by value and encode eit into type
     T = eltype(handle)
     cn = channels(handle)
@@ -127,45 +127,45 @@ function call(::Type{Mat}, handle::cvMat)
 end
 
 """Empty mat constructor"""
-function call{T,N}(::Type{Mat{T,N}})
+function (::Type{Mat{T,N}}){T,N}()
     handle = @cxx cv::Mat()
     Mat{T,N}(handle)
 end
-function call{T}(::Type{Mat{T}})
+function (::Type{Mat{T}}){T}()
     handle = @cxx cv::Mat()
     Mat{T,2}(handle)
 end
 
 """Single-channel 2-dimentional mat constructor"""
-function call{T}(::Type{Mat{T}}, rows::Int, cols::Int)
+function (::Type{Mat{T}}){T}(rows::Int, cols::Int)
     typ = maketype(cvdepth(T), 1)
     handle = @cxx cv::Mat(rows, cols, typ)
     Mat{T,2}(handle)
 end
 
 """Multi-chanel 2-dimentional mat constructor"""
-function call{T}(::Type{Mat{T}}, rows::Int, cols::Int, cn::Int)
+function (::Type{Mat{T}}){T}(rows::Int, cols::Int, cn::Int)
     typ = maketype(cvdepth(T), cn)
     handle = @cxx cv::Mat(rows, cols, typ)
     Mat{T,3}(handle)
 end
 
 """Single-channel 2-dimentaionl mat constructor with user provided data"""
-function call{T}(::Type{Mat{T}}, rows::Int, cols::Int, data::Ptr{T}, step=0)
+function (::Type{Mat{T}}){T}(rows::Int, cols::Int, data::Ptr{T}, step=0)
     typ = maketype(cvdepth(T), 1)
     handle = @cxx cv::Mat(rows, cols, typ, data, step)
     Mat{T,2}(handle)
 end
 
 """Multi-channel 2-dimentaionl mat constructor with user provided data"""
-function call{T}(::Type{Mat{T}}, rows::Int, cols::Int, cn::Int, data::Ptr{T},
-                 step=0)
+function (::Type{Mat{T}}){T}(rows::Int, cols::Int, cn::Int, data::Ptr{T},
+        step=0)
     typ = maketype(cvdepth(T), cn)
     handle = @cxx cv::Mat(rows, cols, typ, data, step)
     Mat{T,3}(handle)
 end
 
-call{T,N}(::Type{Mat}, m::Mat{T,N}) = Mat{T,N}(m.handle)
+(::Type{Mat}){T,N}(m::Mat{T,N}) = Mat{T,N}(m.handle)
 
 
 ### Mat-specific methods ###
@@ -233,7 +233,7 @@ type UMat{T,N} <: AbstractCvMat{T,N}
 end
 
 """Generic constructor"""
-function call(::Type{UMat}, handle::UMat)
+function (::Type{UMat})(handle::UMat)
     # Determine dimention and element type by value and encode eit into type
     T = eltype(handle)
     cn = channels(handle)
@@ -243,13 +243,13 @@ function call(::Type{UMat}, handle::UMat)
 end
 
 """Empty mat constructor"""
-function call{T}(::Type{UMat{T}}; usage_flags::UMatUsageFlags=USAGE_DEFAULT)
+function (::Type{UMat{T}}){T}(;usage_flags::UMatUsageFlags=USAGE_DEFAULT)
     handle = @cxx cv::UMat(usage_flags)
     UMat{T,0}(handle)
 end
 
 """Single-channel 2-dimentional mat constructor"""
-function call{T}(::Type{UMat{T}}, rows::Int, cols::Int;
+function (::Type{UMat{T}}){T}(rows::Int, cols::Int;
                 usage_flags::UMatUsageFlags=USAGE_DEFAULT)
     typ = maketype(cvdepth(T), 1)
     handle = @cxx cv::UMat(rows, cols, typ, usage_flags)
@@ -257,15 +257,15 @@ function call{T}(::Type{UMat{T}}, rows::Int, cols::Int;
 end
 
 """Multi-chanel 2-dimentional mat constructor"""
-function call{T}(::Type{UMat{T}}, rows::Int, cols::Int, cn::Int;
+function (::Type{UMat{T}}){T}(rows::Int, cols::Int, cn::Int;
                 usage_flags::UMatUsageFlags=USAGE_DEFAULT)
     typ = maketype(cvdepth(T), cn)
     handle = @cxx cv::UMat(rows, cols, typ, usage_flags)
     UMat{T,3}(handle)
 end
 
-call{T,N}(::Type{UMat}, m::UMat{T,N}) = UMat{T,N}(m.handle)
-call{T,N}(::Type{UMat}, m::Mat{T,N}, flags=ACCESS_READ) =
+(::Type{UMat}){T,N}(m::UMat{T,N}) = UMat{T,N}(m.handle)
+(::Type{UMat}){T,N}(m::Mat{T,N}, flags=ACCESS_READ) =
     UMat{T,N}(@cxx (m.handle)->getUMat(flags))
 
 similar{T}(m::UMat{T}) = UMat{T}(size(m)...)

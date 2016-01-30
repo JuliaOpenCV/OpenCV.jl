@@ -11,12 +11,12 @@ typealias AbstractCvScalar Union{cvScalar, cvScalar_}
 
 """cv::Point_<T>"""
 typealias cvPoint_{T} cxxt"cv::Point_<$T>"
-call{T}(::Type{cvPoint_{T}}, x, y) = icxx"cv::Point_<$T>($x, $y);"
+(::Type{cvPoint_{T}}){T}(x, y) = icxx"cv::Point_<$T>($x, $y);"
 eltype{T}(p::cvPoint_{T}) = T
 
 """cv::Point3_<T>"""
 typealias cvPoint3_{T} cxxt"cv::Point3_<$T>"
-call{T}(::Type{cvPoint3_{T}}, x, y, z) = icxx"cv::Point3_<$T>($x, $y, $z);"
+(::Type{cvPoint3_{T}}){T}(x, y, z) = icxx"cv::Point3_<$T>($x, $y, $z);"
 eltype{T}(p::cvPoint3_{T}) = T
 
 """cv::Point"""
@@ -27,7 +27,7 @@ typealias AbstractCvPoint Union{cvPoint, cvPoint_}
 
 """cv::Size_<T>"""
 typealias cvSize_{T} cxxt"cv::Size_<$T>"
-call{T}(::Type{cvSize_{T}}, x, y) = icxx"cv::Size_<$T>($x, $y);"
+(::Type{cvSize_{T}}){T}(x, y) = icxx"cv::Size_<$T>($x, $y);"
 eltype{T}(s::cvSize_{T}) = T
 
 """cv::Size"""
