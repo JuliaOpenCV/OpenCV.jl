@@ -63,6 +63,7 @@ cmake_options = [
     "-DBUILD_opencv_java=OFF",
     "-DBUILD_opencv_python=OFF",
     "-DBUILD_opencv_nonfree=OFF",
+    "-DBUILD_opencv_viz=OFF",
     "-DBUILD_DOCS=OFF",
 ]
 
