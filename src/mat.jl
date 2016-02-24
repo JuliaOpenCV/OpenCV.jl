@@ -13,7 +13,7 @@ handle(m::AbstractCvMat) = m.handle
 
 const cvMatExpr = cxxt"cv::MatExpr"
 function _size(expr::cvMatExpr)
-    s::cvSize = @cxx expr->size()
+    s::cvSize = icxx"$expr.size();"
     height(s), width(s)
 end
 _type(m::cvMatExpr) = icxx"$m.type();"
@@ -34,7 +34,7 @@ data(m::cvMat) = icxx"$m.data;"
 
 import Cxx: CppEnum
 
-const UMatUsageFlags = CppEnum{symbol("cv::UMatUsageFlags")}
+const UMatUsageFlags = CppEnum{symbol("cv::UMatUsageFlags"),Int32}
 
 const USAGE_DEFAULT = UMatUsageFlags(0)
 const USAGE_ALLOCATE_HOST_MEMORY = UMatUsageFlags(1 << 0)
@@ -42,10 +42,10 @@ const USAGE_ALLOCATE_DEVICE_MEMORY = UMatUsageFlags(1 << 1)
 const USAGE_ALLOCATE_SHARED_MEMORY = UMatUsageFlags(1 << 2)
 const __UMAT_USAGE_FLAGS_32BIT = UMatUsageFlags(0x7fffffff)
 
-cvUMat(usage_flags::UMatUsageFlags=USAGE_DEFAULT) = @cxx cv::UMat(usage_flags)
-cvUMat(m::cvUMat) = @cxx cv::UMat(m)
+cvUMat(usage_flags::UMatUsageFlags=USAGE_DEFAULT) = icxx"cv::UMat($usage_flags);"
+cvUMat(m::cvUMat) = icxx"cv::UMat($m);"
 usageFlags(m::cvUMat) = icxx"$m.usageFlags;"::UMatUsageFlags
-elemSize1(m::cvUMat) = Int(@cxx m->elemSize1())
+elemSize1(m::cvUMat) = convert(Int, icxx"$m.elemSize1();")
 
 
 ### Methods for AbstractCvMat ###
@@ -128,32 +128,32 @@ end
 
 """Empty mat constructor"""
 function (::Type{Mat{T,N}}){T,N}()
-    handle = @cxx cv::Mat()
+    handle = icxx"cv::Mat();"
     Mat{T,N}(handle)
 end
 function (::Type{Mat{T}}){T}()
-    handle = @cxx cv::Mat()
+    handle = icxx"cv::Mat();"
     Mat{T,2}(handle)
 end
 
 """Single-channel 2-dimentional mat constructor"""
 function (::Type{Mat{T}}){T}(rows::Int, cols::Int)
     typ = maketype(cvdepth(T), 1)
-    handle = @cxx cv::Mat(rows, cols, typ)
+    handle = icxx"cv::Mat($rows, $cols, $typ);"
     Mat{T,2}(handle)
 end
 
 """Multi-chanel 2-dimentional mat constructor"""
 function (::Type{Mat{T}}){T}(rows::Int, cols::Int, cn::Int)
     typ = maketype(cvdepth(T), cn)
-    handle = @cxx cv::Mat(rows, cols, typ)
+    handle = icxx"cv::Mat($rows, $cols, $typ);"
     Mat{T,3}(handle)
 end
 
 """Single-channel 2-dimentaionl mat constructor with user provided data"""
 function (::Type{Mat{T}}){T}(rows::Int, cols::Int, data::Ptr{T}, step=0)
     typ = maketype(cvdepth(T), 1)
-    handle = @cxx cv::Mat(rows, cols, typ, data, step)
+    handle = icxx"cv::Mat($rows, $cols, $typ, $data, $step);"
     Mat{T,2}(handle)
 end
 
@@ -161,7 +161,7 @@ end
 function (::Type{Mat{T}}){T}(rows::Int, cols::Int, cn::Int, data::Ptr{T},
         step=0)
     typ = maketype(cvdepth(T), cn)
-    handle = @cxx cv::Mat(rows, cols, typ, data, step)
+    handle = icxx"cv::Mat($rows, $cols, $typ, $data, $step);"
     Mat{T,3}(handle)
 end
 
@@ -244,7 +244,7 @@ end
 
 """Empty mat constructor"""
 function (::Type{UMat{T}}){T}(;usage_flags::UMatUsageFlags=USAGE_DEFAULT)
-    handle = @cxx cv::UMat(usage_flags)
+    handle = icxx"cv::UMat($usage_flags);"
     UMat{T,0}(handle)
 end
 
@@ -252,7 +252,7 @@ end
 function (::Type{UMat{T}}){T}(rows::Int, cols::Int;
                 usage_flags::UMatUsageFlags=USAGE_DEFAULT)
     typ = maketype(cvdepth(T), 1)
-    handle = @cxx cv::UMat(rows, cols, typ, usage_flags)
+    handle = icxx"cv::UMat($rows, $cols, $typ, $usage_flags);"
     UMat{T,2}(handle)
 end
 
@@ -260,13 +260,15 @@ end
 function (::Type{UMat{T}}){T}(rows::Int, cols::Int, cn::Int;
                 usage_flags::UMatUsageFlags=USAGE_DEFAULT)
     typ = maketype(cvdepth(T), cn)
-    handle = @cxx cv::UMat(rows, cols, typ, usage_flags)
+    handle = icxx"cv::UMat($rows, $cols, $typ, $usage_flags);"
     UMat{T,3}(handle)
 end
 
 (::Type{UMat}){T,N}(m::UMat{T,N}) = UMat{T,N}(m.handle)
-(::Type{UMat}){T,N}(m::Mat{T,N}, flags=ACCESS_READ) =
-    UMat{T,N}(@cxx (m.handle)->getUMat(flags))
+function (::Type{UMat}){T,N}(m::Mat{T,N}, flags=ACCESS_READ)
+    UMat{T,N}(
+        icxx"$(m.handle).getUMat($flags);")
+end
 
 similar{T}(m::UMat{T}) = UMat{T}(size(m)...)
 similar_empty(m::UMat) = similar(m)
@@ -277,13 +279,8 @@ show(io::IO, u::UMat) = show(io, convert(Mat, u))
 
 ### MatExpr{T,N} to Mat{T,N} conversion ###
 
-cxx"""
-cv::Mat expr_to_mat(cv::MatExpr& expr) {
-    cv::Mat mat(expr);
-    return mat;
-}
-"""
-convert(::Type{Mat}, m::MatExpr) = Mat(@cxx expr_to_mat(m.handle))
+convert(::Type{Mat}, m::MatExpr) = Mat(
+    icxx"return cv::Mat($(m.handle));")
 function show(io::IO, m::MatExpr)
     print(io, string(typeof(m)))
     print(io, "\n")
@@ -293,19 +290,19 @@ end
 
 ### AbstractCvMat{T,N} to MatExpr{T,N}
 
-convert(::Type{MatExpr}, m::AbstractCvMat) =
-    MatExpr(@cxx cv::MatExpr(m.handle))
-convert{T,N}(::Type{MatExpr{T,N}}, m::AbstractCvMat{T,N}) =
-    MatExpr{T,N}(@cxx cv::MatExpr(m.handle))
+convert(::Type{MatExpr}, m::AbstractCvMat) = MatExpr(
+    icxx"return cv::MatExpr($(m.handle));")
+convert{T,N}(::Type{MatExpr{T,N}}, m::AbstractCvMat{T,N}) = MatExpr{T,N}(
+    icxx"return cv::MatExpr($(m.handle));")
 convert(::Type{MatExpr}, m::UMat) = convert(MatExpr, convert(Mat, m))
-convert{T,N}(::Type{MatExpr{T,N}}, m::UMat{T,N}) =
-    MatExpr{T,N}(@cxx cv::MatExpr(m.handle))
+convert{T,N}(::Type{MatExpr{T,N}}, m::UMat{T,N}) = MatExpr{T,N}(
+    icxx"return cv::MatExpr($(m.handle));")
 
 
 ### UMat{T,N} to Mat{T,N} conversion ###
 
-convert{T,N}(::Type{Mat}, m::UMat{T,N}, flags=ACCESS_READ) =
-    Mat{T,N}(@cxx (m.handle)->getMat(flags))
+convert{T,N}(::Type{Mat}, m::UMat{T,N}, flags=ACCESS_READ) = Mat{T,N}(
+    icxx"$(m.handle).getMat($flags);")
 
 
 ### Array{T,N} to Mat conversion ###
@@ -348,7 +345,7 @@ macro matexpr(ex)
 end
 
 # For convenience
-handle(x::Number) = x
+@inline handle(x::Number) = x
 
 # to avoid method ambiguity warnings
 for op in [:+, :-, :.*, :./, :*]
@@ -367,10 +364,12 @@ end
 -(x::MatExpr, y::MatExpr) = @matexpr x - y
 -(x::MatExpr, y::Number) = @matexpr x - y
 -(x::Number, y::MatExpr) = @matexpr x - y
--(x::MatExpr) = MatExpr(@cxx 0 - handle(x))
+-(x::MatExpr) = MatExpr(
+    icxx"0 - $(x.handle);")
 -(x::AbstractCvMat) = -(MatExpr(x))
 
-.*(x::MatExpr, y::MatExpr) = MatExpr(@cxx handle(x)->mul(handle(y)))
+.*(x::MatExpr, y::MatExpr) = MatExpr(
+    icxx"$(x.handle).mul($(y.handle));")
 .*(x::MatExpr, y::Number) = @matexpr x * y
 .*(x::Number, y::MatExpr) = @matexpr x * y
 
@@ -388,21 +387,23 @@ end
 # For AbstractCvMats
 for op in [:+, :-, :.*, :./, :*]
     @eval begin
-        $op(x::AbstractCvMat, y::AbstractCvMat) = $op(MatExpr(x), MatExpr(y))
-        $op(x::MatExpr, y::AbstractCvMat) = $op(promote(x, y)...)
-        $op(x::AbstractCvMat, y::MatExpr) = $op(promote(x, y)...)
+        @inline $op(x::AbstractCvMat, y::AbstractCvMat) =
+            $op(MatExpr(x), MatExpr(y))
+        @inline $op(x::MatExpr, y::AbstractCvMat) = $op(promote(x, y)...)
+        @inline $op(x::AbstractCvMat, y::MatExpr) = $op(promote(x, y)...)
     end
 end
 
 # Mat and scalars
 for op in [:+, :-, :.*, :./, :*]
     @eval begin
-        $op(x::AbstractCvMat, y::Number) = $op(MatExpr(x), y)
-        $op(x::Number, y::AbstractCvMat) = $op(x, MatExpr(y))
+        @inline $op(x::AbstractCvMat, y::Number) = $op(MatExpr(x), y)
+        @inline $op(x::Number, y::AbstractCvMat) = $op(x, MatExpr(y))
     end
 end
 
-transpose(x::MatExpr) = MatExpr(@cxx handle(x)->t())
+transpose(x::MatExpr) = MatExpr(
+    icxx"$(x.handle).t();")
 transpose(x::AbstractCvMat) = transpose(MatExpr(x))
 ctranspose(x::Union{MatExpr, AbstractCvMat}) = transpose(x)
 
@@ -411,7 +412,8 @@ ctranspose(x::Union{MatExpr, AbstractCvMat}) = transpose(x)
 
 import Base: inv, ^
 
-inv(x::MatExpr, method=DECOMP_SVD) = MatExpr(@cxx handle(x)->inv(method))
+inv(x::MatExpr, method=DECOMP_SVD) = MatExpr(
+    icxx"$(x.handle).inv($method);")
 inv(x::AbstractCvMat, method=DECOMP_SVD) = inv(MatExpr(x), method)
 
 ^(x::MatExpr, p::Integer) = (p == -1) ? inv(x) : error("not supported")
