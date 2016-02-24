@@ -31,7 +31,7 @@ opencv_libs = [
     opencv_highgui,
     opencv_imgcodecs,
     opencv_imgproc,
-    opencv_videoio
+    opencv_videoio,
     ]
 
 ### Source provider ###
@@ -65,6 +65,9 @@ cmake_options = [
     "-DBUILD_opencv_nonfree=OFF",
     "-DBUILD_opencv_viz=OFF",
     "-DBUILD_DOCS=OFF",
+    "-DWITH_VTK=OFF",
+    "-DWITH_MATLAB=OFF",
+    "-DWITH_FFMPEG=OFF"
 ]
 
 ### Build opencv from source ###
