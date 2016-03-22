@@ -51,7 +51,7 @@ cmake_options = [
     "-DWITH_CUDA=OFF",
     "-DENABLE_AVX=ON",
     "-DWITH_OPENGL=ON",
-    "-DWITH_OPENCL=ON",
+    "-DWITH_OPENCL=OFF", # TODO
     "-DWITH_IPP=ON",
     "-DWITH_TBB=ON",
     "-DWITH_EIGEN=ON",
@@ -67,7 +67,9 @@ cmake_options = [
     "-DBUILD_DOCS=OFF",
     "-DWITH_VTK=OFF",
     "-DWITH_MATLAB=OFF",
-    "-DWITH_FFMPEG=OFF"
+    "-DWITH_FFMPEG=OFF",
+    "-DWITH_OPENMP=ON",
+    "-DWITH_QT=ON",
 ]
 
 ### Build opencv from source ###
