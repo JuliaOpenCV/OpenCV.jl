@@ -34,11 +34,10 @@ end
     @test isa(mat, cv2.Mat)
     @test size(umat) == (3, 3)
 
-    @testset "make sure cv2.resize doesn't change the type of mat" begin
-        umat_resized = cv2.resize(umat, size(umat))
-        @test isa(umat_resized, cv2.UMat)
-        @test size(umat) == size(umat_resized)
-    end
+    # make sure cv2.resize doesn't change the type of mat
+    umat_resized = cv2.resize(umat, size(umat))
+    @test isa(umat_resized, cv2.UMat)
+    @test size(umat) == size(umat_resized)
 end
 
 macro mat_op_testdata()

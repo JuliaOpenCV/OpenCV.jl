@@ -242,13 +242,13 @@ function (::Type{UMat})(handle::UMat)
     UMat{T,N}(handle)
 end
 
-"""Empty mat constructor"""
+# """Empty mat constructor"""
 function (::Type{UMat{T}}){T}(;usage_flags::UMatUsageFlags=USAGE_DEFAULT)
     handle = icxx"cv::UMat($usage_flags);"
     UMat{T,0}(handle)
 end
 
-"""Single-channel 2-dimentional mat constructor"""
+# """Single-channel 2-dimentional mat constructor"""
 function (::Type{UMat{T}}){T}(rows::Int, cols::Int;
                 usage_flags::UMatUsageFlags=USAGE_DEFAULT)
     typ = maketype(cvdepth(T), 1)
@@ -256,7 +256,7 @@ function (::Type{UMat{T}}){T}(rows::Int, cols::Int;
     UMat{T,2}(handle)
 end
 
-"""Multi-chanel 2-dimentional mat constructor"""
+# """Multi-chanel 2-dimentional mat constructor"""
 function (::Type{UMat{T}}){T}(rows::Int, cols::Int, cn::Int;
                 usage_flags::UMatUsageFlags=USAGE_DEFAULT)
     typ = maketype(cvdepth(T), cn)
