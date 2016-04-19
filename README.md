@@ -5,13 +5,13 @@ The package is re-organized into https://github.com/JuliaCV to simplify developm
 ## Installation
 
 ```jl
-Pkg.clone("https://github.com/JuliaOpenCV/CVCore")
-Pkg.clone("https://github.com/JuliaOpenCV/CVHighGUI")
-Pkg.clone("https://github.com/JuliaOpenCV/CVImgProc")
-Pkg.clone("https://github.com/JuliaOpenCV/CVImgCodecs")
-Pkg.clone("https://github.com/JuliaOpenCV/CVVideoIO")
-Pkg.clone("https://github.com/JuliaOpenCV/LibOpenCV")
-Pkg.clone("https://github.com/JuliaOpenCV/OpenCV")
+Pkg.clone("https://github.com/JuliaOpenCV/CVCore.jl")
+Pkg.clone("https://github.com/JuliaOpenCV/CVHighGUI.jl")
+Pkg.clone("https://github.com/JuliaOpenCV/CVImgProc.jl")
+Pkg.clone("https://github.com/JuliaOpenCV/CVImgCodecs.jl")
+Pkg.clone("https://github.com/JuliaOpenCV/CVVideoIO.jl")
+Pkg.clone("https://github.com/JuliaOpenCV/LibOpenCV.jl")
+Pkg.clone("https://github.com/JuliaOpenCV/OpenCV.jl")
 ```
 
 ```jl
