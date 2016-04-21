@@ -1,6 +1,11 @@
 # OpenCV
 
-The package is re-organized into https://github.com/JuliaCV to simplify development and minimize dependencies. See [README.org.md](README.org.md) for previous README.
+The package is re-organized into https://github.com/JuliaCV to simplify development and minimize dependencies. Note that OpenCV packages are **much work in progress** and there's almost no docs. Please file an issue if you have any trouble or request for docs, etc. Currently only tested on OSX.
+
+## Requirements
+
+- Julia (master) with [Keno/Cxx.jl](https://github.com/Keno/Cxx.jl)
+- OpenCV 3.1.0 (built as shared libraries)
 
 ## Installation
 
