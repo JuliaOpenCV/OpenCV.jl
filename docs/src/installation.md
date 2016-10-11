@@ -39,14 +39,14 @@ Pkg.build("Cxx")
 You are almost there! Clone the packages:
 
 ```julia
-Pkg.clone("https://github.com/JuliaOpenCV/CVCore")
-Pkg.clone("https://github.com/JuliaOpenCV/CVCalib3d")
-Pkg.clone("https://github.com/JuliaOpenCV/CVHighGUI")
-Pkg.clone("https://github.com/JuliaOpenCV/CVVideoIO")
-Pkg.clone("https://github.com/JuliaOpenCV/CVImgProc")
-Pkg.clone("https://github.com/JuliaOpenCV/CVImgCodecs")
-Pkg.clone("https://github.com/JuliaOpenCV/LibOpenCV")
-Pkg.clone("https://github.com/JuliaOpenCV/OpenCV")
+Pkg.clone("https://github.com/JuliaOpenCV/CVCore.jl")
+Pkg.clone("https://github.com/JuliaOpenCV/CVCalib3d.jl")
+Pkg.clone("https://github.com/JuliaOpenCV/CVHighGUI.jl")
+Pkg.clone("https://github.com/JuliaOpenCV/CVVideoIO.jl")
+Pkg.clone("https://github.com/JuliaOpenCV/CVImgProc.jl")
+Pkg.clone("https://github.com/JuliaOpenCV/CVImgCodecs.jl")
+Pkg.clone("https://github.com/JuliaOpenCV/LibOpenCV.jl")
+Pkg.clone("https://github.com/JuliaOpenCV/OpenCV.jl")
 ```
 
 and then:
